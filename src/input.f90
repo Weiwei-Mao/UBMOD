@@ -13,7 +13,7 @@
 !   xConv       The conversion coefficient of length.
 !   tConv       The conversion coefficient of time.
 !   mConv       The conversion coefficient of mass.
-!   ifET        If meteorological data to calculate the ET.
+!   AtmBC        If meteorological data to calculate the ET.
 !   Bup         Flux upper boundary condition.
 !   Bdn         Flux lower boundary condition.
 !   lchem       If calculate the solute.
@@ -56,11 +56,13 @@
     READ(33,*) LUnit,TUnit,MUnit
     CALL Conversion(LUnit, TUnit, MUnit, xConv, tConv, mConv)
     READ(33,*)
-    READ(33,*) ifET,Bup,Bdn,lchem,Drng,Dfit
+    READ(33,*) lCheck,lWat,lChem,lTemp,lCrop,AtmBC
+    READ(33,*)
+    READ(33,*) Bup,Bdn,Drng,Dfit
     WRITE(*,*) 'Reading Material information'
     READ(33,*)
     READ(33,*)
-    READ(33,*) NMat,NPar
+    READ(33,*) NMat,NReg,NPar,CosAlf
     READ(33,*) 
     DO i=1,NMat
     READ(33,*) (Par(j,i),j=1,NPar),thF(i),thW(i),(sp(j,i),j=1,4)

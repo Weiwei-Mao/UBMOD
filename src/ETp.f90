@@ -27,7 +27,7 @@
 !                      discreted layers
 !       Ep_Tp          Call for Ep[mm] and Tp[mm]
 ! ====================================================================
-    SUBROUTINE ETp(Num)
+    SUBROUTINE ETp(Num,datapath)
     USE parm
     IMPLICIT NONE
 
@@ -39,9 +39,11 @@
     CHARACTER (LEN=6) :: cha1, cha2, cha3
     CHARACTER (LEN=8) :: date1
     CHARACTER (LEN=8), DIMENSION(5) :: da
-    INTEGER (KIND=4) :: i,j,k,jj,num
+    CHARACTER (LEN=100) :: datapath
+    INTEGER (KIND=4) :: i,j,k,jj,num,lenpath
     REAL (KIND=KR) :: ET0, EP, TP, Nouse, rd, dtp
 
+    lenpath = Len_Trim(datapath)
     cha1="??.et0"
     cha2="??.crp"
     cha3="??.eti"
@@ -52,15 +54,15 @@
         dz1(i)=zx(i+1)  
     ENDDO
 
-    CALL Crop(num,numc,date1,MaxAL,iof)
-    CALL ep_tp(num,date1,MaxAL,iof,ifet)
+    CALL Crop(datapath,num,numc,date1,MaxAL)
+    CALL ep_tp(datapath,num,date1,MaxAL,AtmBC)
 
     WRITE(cha1(1:2),"(i2.2)")num
     WRITE(cha2(1:2),"(i2.2)")num
     WRITE(cha3(1:2),"(i2.2)")num
-    OPEN(4,file='Rh1D.in/'//trim(iof)//'/'//cha1,status="unknown")
-    OPEN(5,file='Rh1D.in/'//trim(iof)//'/'//cha2,status="unknown")
-    OPEN(6,file='Rh1D.in/'//trim(iof)//'/'//cha3,status="unknown")
+    OPEN(4,file=datapath(1:lenpath)//'/'//cha1,status="unknown")
+    OPEN(5,file=datapath(1:lenpath)//'/'//cha2,status="unknown")
+    OPEN(6,file=datapath(1:lenpath)//'/'//cha3,status="unknown")
     WRITE(6,*)"date ordinal Es(1:Nlayer)/mm    TS(1:Nlayer)/mm"
     READ(4,*)cha1
     READ(5,*)cha1
@@ -76,7 +78,7 @@
         ENDDO
         CALL Fdense(Nlayer,dz1,dtp,work,sed,4)
 
-        CALL cdatebase(numc,da,crpdat,iof)
+        CALL cdatebase(datapath,numc,da,crpdat)
         DO jj=1,10
             work(jj)=crpdat(jj+10)
         ENDDO
@@ -111,16 +113,16 @@
 ! =========================related functions==========================
 !   None.
 ! ====================================================================
-    SUBROUTINE ep_tp(num,dateini,interval,iof,ifet)
+    SUBROUTINE ep_tp(datapath,num,dateini,interval,AtmBC)
     USE parm, ONLY : KR, KI
     IMPLICIT NONE
     
-    LOGICAL :: ifet
+    LOGICAL :: AtmBC
     CHARACTER (LEN=6) :: cha1
     CHARACTER (LEN=6) :: cha2
     CHARACTER (LEN=6) :: cha3
-    CHARACTER (LEN=9) :: iof
     CHARACTER (LEN=8) :: dateini
+    CHARACTER (LEN=100) :: datapath
     INTEGER (KIND=KI) :: i,year,month,day,julie,DM,interval
     !INTEGER (kind=KI) :: yearini, monthini, dayini
     INTEGER (KIND=KI) :: num, ierr
@@ -128,20 +130,22 @@
     tmean1,ws,ra,np,rns,eamax,eamin,ed,rnl,rn,g,lamta,u2,gama,ato_p,et0,dt,PE
     REAL (KIND=KR) :: fai,hhh,hu
     REAL (KIND=KR) :: aa, ckc, claif, etc, ep, tp
+    INTEGER (KIND=4) :: lenpath
 
+    lenpath = Len_Trim(datapath)
     cha1="??.wea"
     cha2="??.et0"
     cha3="??.crp"
     WRITE(cha1(1:2),"(i2.2)")num
     WRITE(cha2(1:2),"(i2.2)")num
     WRITE(cha3(1:2),"(i2.2)")num
-    OPEN(1,file='Rh1D.in/'//trim(iof)//'/'//cha1,status="old")
-    OPEN(3,file='Rh1D.in/'//trim(iof)//'/'//cha3,status="old")
-    OPEN(2,file='Rh1D.in/'//trim(iof)//'/'//cha2,status="unknown")
+    OPEN(1,file=datapath(1:lenpath)//'/'//cha1,status="old")
+    OPEN(3,file=datapath(1:lenpath)//'/'//cha3,status="old")
+    OPEN(2,file=datapath(1:lenpath)//'/'//cha2,status="unknown")
     WRITE(2,*)"year month day ordinal et0 ep tp	pe"
     read(3,*) !/lai and kc/
     
-    IF (ifet) THEN
+    IF (AtmBC) THEN
         read(1,*)
         read(1,*)fai,hhh,hu
         read(1,*)
@@ -150,10 +154,10 @@
     ENDIF
 		
     DO i=1,interval
-        IF (ifet) THEN
+        IF (AtmBC) THEN
             READ(1,*,iostat=ierr)year,month,day,tmean,tmax,tmin,nact,rhmean,uh,ato_p,PE
             CALL Refet(year,month,day,Tmean,tmax,tmin,nact,RHmean,uh,hu,ato_p,hhh,fai,ET0,tmean1)
-        ELSEIF (.not.ifet) THEN
+        ELSEIF (.not.AtmBC) THEN
             READ(1,*)year,month,day,et0,PE
         ENDIF
 
@@ -190,7 +194,7 @@
 ! =========================related functions==========================
 !   None.
 ! ====================================================================	
-    SUBROUTINE Crop(num,numc,dateini,interval,iof)
+    SUBROUTINE Crop(datapath,num,numc,dateini,interval)
     USE parm, ONLY : KR, KI
     IMPLICIT NONE
 
@@ -200,20 +204,22 @@
     CHARACTER (len=8), DIMENSION(5) :: da
     CHARACTER (len=6) :: nameF
     CHARACTER (len=10) :: cha1
-    CHARACTER (len=9) :: iof
+    CHARACTER (LEN=100) :: datapath
     INTEGER (kind=KI) interval	! the simulation period
     INTEGER (kind=KI), DIMENSION(5) :: jd
-    INTEGER (kind=KI) :: numc, num, nyear, nyear1, ndyear, JDATE, jd1, jmax, nyrr
+    INTEGER (kind=KI) :: numc, nyear, nyear1, ndyear, JDATE, jd1, jmax, nyrr
     INTEGER (kind=KI) :: i, j, k
     REAL (kind=KR), DIMENSION(21) :: crpdat
     REAL (kind=KR) :: f, ckc1, ckc2, ckc3, rd1, rd2, clai1, clai2, clai3, clai4
     REAL (kind=KR) :: ckc, rd, clai, claif
-   
+    INTEGER (KIND=4) :: lenpath, num
+    
+    lenpath = Len_Trim(datapath)   
     namef="??.crp"
     WRITE(namef(1:2),"(i2.2)")num
-    OPEN(11,file='Rh1D.in/'//trim(iof)//'/'//nameF,status="unknown")
+    OPEN(11,file=datapath(1:lenpath)//'/'//nameF,status="unknown")
     WRITE(11,*)"date    ordinal Kc  rootdepth   LAI LAIF    rp(1:Nlayer)"
-    CALL cdatebase(numc,da,crpdat,iof)
+    CALL cdatebase(datapath,numc,da,crpdat)
 
     f=crpdat(1)
     ckc1=crpdat(2)
@@ -354,7 +360,7 @@
 ! =========================related functions==========================
 !   None.
 ! ====================================================================
-    SUBROUTINE cdatebase(Numc,da,crpdat,iof)
+    SUBROUTINE cdatebase(datapath,Numc,da,crpdat)
     USE parm, ONLY : KR, KI
     IMPLICIT NONE
 
@@ -362,9 +368,11 @@
     REAL (kind=KR), DIMENSION(21) :: crpdat
     CHARACTER (len=8), DIMENSION(5) :: da
     CHARACTER (len=10) :: nameC	
-    CHARACTER (len=9) :: iof
+    CHARACTER (LEN=100) :: datapath
+    INTEGER (KIND=4) :: lenpath
 
-    OPEN(1,file='Rh1d.in/'//trim(iof)//'/cropdat.dat',status="old")
+    lenpath = Len_Trim(datapath)
+    OPEN(1,file=datapath(1:lenpath)//'/cropdat.dat',status="old")
     
     DO i=1,numc-1
         READ(1,*)

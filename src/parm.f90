@@ -17,9 +17,17 @@
       INTEGER, PUBLIC, PARAMETER :: NlayerD=130      ! Max numbers of soil layers.
       INTEGER, PUBLIC, PARAMETER :: numc=1           ! Max numbers of plant species.
 
+      LOGICAL (KIND=4) :: lCheck
+      LOGICAL (KIND=4) :: lWat
+      LOGICAL (KIND=4) :: lChem   ! If to calculate the solute.
+      LOGICAL (KIND=4) :: lTemp
+      LOGICAL (KIND=4) :: lCrop
+      LOGICAL (KIND=4) :: AtmBC       ! If to calculate the ET0 with P-M equation.
+
       INTEGER (KIND=KI) :: Nlayer     ! Numbers of real soil layers.
       INTEGER (KIND=KI) :: NObs       ! Numbers of the observation points.
       INTEGER (KIND=KI) :: Nmat       ! Numbers of soil materials.
+      INTEGER (KIND=KI) :: NReg
       INTEGER (KIND=KI) :: MPL        ! Print related.
       INTEGER (KIND=KI) :: MMPL       ! Print related.
       INTEGER (KIND=KI) :: interval	  ! The total calculation time (Unit day).
@@ -38,9 +46,6 @@
       INTEGER (KIND=KI), ALLOCATABLE :: Obs(:)    ! The observation points.
       INTEGER (KIND=KI), ALLOCATABLE :: MATuz(:)  ! The Material Serial Number of Each Layer.
 
-      LOGICAL (KIND=KI) :: lchem      ! If to calculate the solute.
-      LOGICAL (KIND=KI) :: ifET       ! If to calculate the ET0 with P-M equation.
-
       CHARACTER (LEN=8) :: date
       CHARACTER (LEN=9) :: iof        ! Work Directory.
       CHARACTER (LEN=5) :: LUnit      ! Length Unit. 
@@ -48,6 +53,7 @@
       CHARACTER (LEN=5) :: MUnit      ! Mass Unit.
           
       REAL (KIND=KR) :: Tol=1E-10_KR
+      REAL (KIND=KR) :: CosAlf
       REAL (KIND=KR) :: dt            ! Time step.
       REAL (KIND=KR) :: dtOld
       REAL (KIND=KR) :: TotalPerco    ! The Percolation flux of the soil column.

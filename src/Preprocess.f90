@@ -132,17 +132,20 @@
 ! =========================related functions==========================
 !   None.
 ! ==================================================================== 
-    SUBROUTINE Upper_Boundary
+    SUBROUTINE Upper_Boundary(datapath)
     USE parm
-    CHARACTER (len=8) :: DDate
-    INTEGER (kind=KI) :: Jd0
-    
+    CHARACTER (LEN=8) :: DDate
+    CHARACTER (LEN=100) :: datapath
+    INTEGER (KIND=4) :: lenpath
+    INTEGER (KIND=KI) :: Jd0
+
+    lenpath = Len_Trim(datapath)
     IF (bup == 1) THEN  
-        CALL Etp(1)
-        OPEN(110,file='Rh1D.in/'//trim(iof)//'/'//'01.et0',status='old')
+        CALL Etp(1,datapath)
+        OPEN(110,file=datapath(1:lenpath)//'/'//'01.et0',status='old')
         READ(110,*)
-        OPEN(130,file='Rh1D.in/'//trim(iof)//'/'//'01.eti',status='old')
-        OPEN(150,file='Rh1D.out/'//trim(iof)//'/'//'eta.dat',status='unknown')
+        OPEN(130,file=datapath(1:lenpath)//'/'//'01.eti',status='old')
+        OPEN(150,file=datapath(1:lenpath)//'/'//'eta.dat',status='unknown')
         WRITE(150,*)"Variables=DoY,   Ea,   Ta,   Date"
         READ(130,*)
                 

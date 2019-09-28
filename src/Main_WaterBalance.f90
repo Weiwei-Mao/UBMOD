@@ -33,21 +33,27 @@
     USE parm
     IMPLICIT NONE
     REAL (KIND=KR) :: t1, t2, Zero
+    INTEGER (KIND=4) :: lengthpath, ierr
+    CHARACTER (100) :: filename, datapath
+
     Zero = 0.0_KR
     
-    iof='/sim324/'	!the simulated project file fold
-
+    filename = 'LEVEL_01.DIR'
+    OPEN(10,file=filename, status='old',err=901)
+    READ(10,'(a)',err=904) datapath
+    CLOSE(10)
+    lengthpath = Len_Trim(datapath)
 !---Open the interface files. The relpath is used here.
 ! ====================================================================
 !   input files
-    OPEN(33,file='Rh1D.in/'//trim(iof)//'/SELECTOR.IN', status='old')
-    OPEN(32,file='Rh1D.in/'//trim(iof)//'/uz.IN',       status='old')
+    OPEN(33,file=datapath(1:lengthpath)//'/Selector.IN', status='old',err=902)
+    OPEN(32,file=datapath(1:lengthpath)//'/Profile.IN' , status='old',err=902)
 !   output files
-    OPEN(90,file='Rh1D.out/'//trim(iof)//'/runtime.OUT',  status='unknown') ! Run time.
-    OPEN(80,file='Rh1D.out/'//trim(iof)//'/thObs.dat',    status='unknown') ! Node data.
-    OPEN(89,file='Rh1D.out/'//trim(iof)//'/balance1d.dat',status='unknown') ! Statistic boundary condition.
-    OPEN(81,file='Rh1D.out/'//trim(iof)//'/thprofile.dat',status='unknown') 
-    OPEN(99,file='Rh1D.out/'//trim(iof)//'/error.txt',    status='unknown') ! Error message.
+    OPEN(90,file=datapath(1:lengthpath)//'/runtime.OUT'  ,status='unknown',err=903) ! Run time.
+    OPEN(80,file=datapath(1:lengthpath)//'/thObs.dat'    ,status='unknown',err=903) ! Node data.
+    OPEN(89,file=datapath(1:lengthpath)//'/balance1d.dat',status='unknown',err=903) ! Statistic boundary condition.
+    OPEN(81,file=datapath(1:lengthpath)//'/thprofile.dat',status='unknown',err=903) 
+    OPEN(99,file=datapath(1:lengthpath)//'/error.txt'    ,status='unknown',err=903) ! Error message.
 ! ====================================================================
       
 !-----Begin of the program.
@@ -68,7 +74,7 @@
 !     Diffusion model.
     CALL Diffusion_Model
 !     Call for reference Evaportranspiration and division of E&T.
-    CALL Upper_Boundary
+    CALL Upper_Boundary(datapath)
 ! ====================================================================
 
 !-----Begin time loop.
@@ -154,4 +160,25 @@
     CLOSE(150) 
     
     STOP
+    
+901 ierr=1
+    GOTO 999
+902 ierr=2
+    GOTO 999
+903 ierr=3
+    GOTO 999
+904 ierr=4
+    GOTO 999
+
+999 CALL ErrorOut(ierr)
+    STOP
+    
     END PROGRAM WaterBalance
+
+    
+    SUBROUTINE ErrorOut(ierr)
+    IMPLICIT NONE
+    INTEGER (KIND=4) :: ierr
+    CHARACTER (LEN=100), DIMENSION(30) :: cErr
+    
+    END SUBROUTINE ErrorOut
