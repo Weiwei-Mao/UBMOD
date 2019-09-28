@@ -28,9 +28,11 @@
     sink1d = 0.0_KR
 
     voluz=sum(th(1:Nlayer)*dz(1:Nlayer))  !!!The specific storage is ignored.
-    WRITE(89,*)"Variables=t,voluz,Dvoluz,qair,qbtm,CumE,CumT,Error,Error%"
-
+    WRITE(89,*,err=901)"Variables=t,voluz,Dvoluz,qair,qbtm,CumE,CumT,Error,Error%"
     RETURN
+    
+901 Terr=1
+    RETURN    
     END SUBROUTINE Balance_Initial
 
 ! ====================================================================
@@ -161,23 +163,25 @@
         Evatra = Evatra/1000_KI
         
     ELSEIF (bup == 2) THEN
-        OPEN(120,file=datapath(1:lenpath)//'/'//'met.in',status='old')
-        READ(120,*)
-        READ(120,*)Nup,Ndn
-        READ(120,*)
-        READ(120,*)(up(1,i),i=1,Nup)
-        READ(120,*)
-        READ(120,*)(up(2,i),i=1,Nup)
-        READ(120,*)
-        READ(120,*)(dn(1,i),i=1,Ndn)
-        READ(120,*)
-        READ(120,*)(dn(2,i),i=1,Ndn)
+        OPEN(120,file=datapath(1:lenpath)//'/'//'met.in',status='old',err=903)
+        READ(120,*,err=903)
+        READ(120,*,err=903)Nup,Ndn
+        READ(120,*,err=903)
+        READ(120,*,err=903)(up(1,i),i=1,Nup)
+        READ(120,*,err=903)
+        READ(120,*,err=903)(up(2,i),i=1,Nup)
+        READ(120,*,err=903)
+        READ(120,*,err=903)(dn(1,i),i=1,Ndn)
+        READ(120,*,err=903)
+        READ(120,*,err=903)(dn(2,i),i=1,Ndn)
     ENDIF
     RETURN
     
 901 Terr=3
     RETURN
 902 Terr=4
+    RETURN
+903 Terr=5
     RETURN
     END SUBROUTINE Upper_Boundary
     

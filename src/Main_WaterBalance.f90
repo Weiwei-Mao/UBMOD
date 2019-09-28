@@ -47,14 +47,14 @@
 !---Open the interface files. The relpath is used here.
 ! ====================================================================
 !   input files
-    OPEN(33,file=datapath(1:lengthpath)//'/Selector.IN', status='old',err=902)
-    OPEN(32,file=datapath(1:lengthpath)//'/Profile.IN' , status='old',err=902)
+    OPEN(33,file=datapath(1:lengthpath)//'/Selector.in', status='old',err=902)
+    OPEN(32,file=datapath(1:lengthpath)//'/Profile.in' , status='old',err=902)
 !   output files
-    OPEN(90,file=datapath(1:lengthpath)//'/runtime.OUT'  ,status='unknown',err=903) ! Run time.
-    OPEN(80,file=datapath(1:lengthpath)//'/thObs.dat'    ,status='unknown',err=903) ! Node data.
-    OPEN(89,file=datapath(1:lengthpath)//'/balance1d.dat',status='unknown',err=903) ! Statistic boundary condition.
-    OPEN(81,file=datapath(1:lengthpath)//'/thprofile.dat',status='unknown',err=903) 
-    OPEN(99,file=datapath(1:lengthpath)//'/error.txt'    ,status='unknown',err=903) ! Error message.
+    OPEN(90,file=datapath(1:lengthpath)//'/Runtime.out'  ,status='unknown',err=903) ! Run time.
+    OPEN(80,file=datapath(1:lengthpath)//'/A_Level.out'  ,status='unknown',err=903) ! Node data.
+    OPEN(89,file=datapath(1:lengthpath)//'/Balance1d.out',status='unknown',err=903) ! Statistic boundary condition.
+    OPEN(81,file=datapath(1:lengthpath)//'/TPrint.out'   ,status='unknown',err=903) 
+    OPEN(99,file=datapath(1:lengthpath)//'/Error.out'    ,status='unknown',err=903) ! Error message.
 ! ====================================================================
       
 !-----Begin of the program.
@@ -74,11 +74,12 @@
     CALL CPU_time (t1)
 !     The initial water amount in model.
     CALL Balance_Initial
+    IF (Terr.ne.0) GOTO 915
 !     Diffusion model.
     CALL Diffusion_Model
 !     Call for reference Evaportranspiration and division of E&T.
     CALL Upper_Boundary(datapath)
-    IF (Terr.ne.0) GOTO (909,910,911,903) Terr
+    IF (Terr.ne.0) GOTO (910,911,912,917,909) Terr
 ! ====================================================================
 
 !-----Begin time loop.
@@ -120,15 +121,18 @@
 ! ====================================================================
 !     Output control.
 !     Output the hydraulic head and soil moisture in 1D model.
-    CALL Hthuz_out       
+    CALL Hthuz_out
+    IF (Terr.ne.0) GOTO (914) Terr
 !   Call for the water balance in 1D and 3D model.
-    CALL BalanceT   
+    CALL BalanceT
+    IF (Terr.ne.0) GOTO 915
 !   call for new time and time step.
     WRITE(*,*)"t=",sngl(t)
     
 !   P-Level information
     IF (abs(TPrint(Plevel)-t) < Tol) THEN
         CALL thOut
+        IF (Terr.ne.0) GOTO (916) Terr
         Plevel = Plevel + 1
     ENDIF
     
@@ -154,7 +158,7 @@
     GOTO 100
     
 200 CALL CPU_time (t2)
-    WRITE(90,*)'Real time [sec]',t2-t1
+    WRITE(90,*,err=913)'Real time [sec]',t2-t1
     CLOSE(90)
     CLOSE(80) 
     CLOSE(89) 
@@ -190,6 +194,18 @@
     GOTO 999
 911 ierr=11
     GOTO 999
+912 ierr=12
+    GOTO 999
+913 ierr=13
+    GOTO 999
+914 ierr=14
+    GOTO 999
+915 ierr=15
+    GOTO 999
+916 ierr=16
+    GOTO 999
+917 ierr=17
+    GOTO 999
 930 ierr=30
     GOTO 999
 931 ierr=31
@@ -210,16 +226,22 @@
 
     cErr( 1)='Open file error in file LEVEL_01.DIR !'
     cErr( 2)='Open file error for input files !'
-    cErr( 3)='Error when opening or writing to an output file !'
+    cErr( 3)='Error when opening the output file !'
     cErr( 4)='Error when reading from an input file LEVEL_01.DIR !'
     cErr( 5)='Error when reading from an input file Selector.in Basic Information !'
     cErr( 6)='Error when reading from an input file Selector.in Material Information !'
     cErr( 7)='Error when reading from an input file Selector.in Time Information !'
     cErr( 8)='Error when reading from an input file Profile.in !'
-    cErr( 9)='Error when opening or reading from an input file 01.wea !'
-    cErr(10)='Error when opening or reading from an input file cropdat.dat !'
-    cErr(11)='Error when opening or reading from an input file crp/et0/eti !'
-    cErr(12)='Dimension of the Array is exceeded !'
+    cErr( 9)='Error when reading from an input file Met.in !'
+    cErr(10)='Error when opening or reading from an input file 01.wea !'
+    cErr(11)='Error when opening or reading from an input file cropdat.dat !'
+    cErr(12)='Error when opening or reading from an input file crp/et0/eti !'
+    cErr(13)='Error when writing to the output file Runtime.out !'
+    cErr(14)='Error when writing to the output file A_Level.out !'
+    cErr(15)='Error when writing to the output file Balance.out !'
+    cErr(16)='Error when writing to the output file TPrint.out !'
+    cErr(17)='Error when writing to the output file eta.dat !'
+    cErr(18)='Dimension of the Array is exceeded !'
     cErr(30)='Mass balance error in Water_Redis module !'
     cErr(31)='Mass balance error in Water_SetET module !'
     cErr(32)='Mass balance error in Water_Diff module !'

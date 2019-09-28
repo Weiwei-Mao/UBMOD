@@ -52,8 +52,11 @@
     IF (wbalt < Tol .and. abs(wbalr - 100._KR)<Tol) THEN
         wbalr = 0.0_KR
     ENDIF
-    WRITE(89,"(f7.3,10E20.6E3)") t,voluz1,dvol,qairt,qbtmt,CumE,CumT,wbalt,wbalr
+    WRITE(89,"(f7.3,10E20.6E3)",err=901) t,voluz1,dvol,qairt,qbtmt,CumE,CumT,wbalt,wbalr
     
+    RETURN
+    
+901 Terr=1
     RETURN
     END SUBROUTINE BalanceT
 
@@ -74,21 +77,29 @@
     SUBROUTINE hthuz_out
     USE parm
 
-    WRITE(80,"(1X,F10.4\)") t,(th(Obs(i)),i=1,NObs)
+    WRITE(80,"(1X,F10.4\)",err=901) t,(th(Obs(i)),i=1,NObs)
     WRITE(80,"(1X,F10.4)") !th(Nlayer) 
     !WRITE(81,*)'Zone T="', t  
     !DO j=1,Nlayer
     !    WRITE(81,*)th(j),zx(j)+dz(j)/2,dz(j)
     !ENDDO
+    RETURN
+
+901 Terr=1
+    RETURN
 
     END SUBROUTINE hthuz_out
     
     SUBROUTINE thOut
     USE parm
     
-    WRITE(81,*)'Zone T="', t
-    WRITE(81,*)'th,  thickness'
+    WRITE(81,*,err=901)'Zone T="', t
+    WRITE(81,*,err=901)'th,  thickness'
     DO j=1,Nlayer
-        WRITE(81,"(2F10.4)")th(j),dz(j)
+        WRITE(81,"(2F10.4)",err=901)th(j),dz(j)
     ENDDO
+    RETURN
+
+901 Terr=1
+    RETURN
     END SUBROUTINE
