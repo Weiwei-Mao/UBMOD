@@ -1,5 +1,5 @@
 ! ====================================================================
-!   Subroutine SelectorIN   
+!   Subroutine Selector_In   
 !     
 !   Purpose: Read information from file selector.in
 ! ====================================================================
@@ -39,7 +39,7 @@
 ! =========================related functions==========================
 !   None.
 ! ====================================================================
-    SUBROUTINE SelectorIN
+    SUBROUTINE Selector_In
     USE parm
     IMPLICIT NONE
 
@@ -47,18 +47,18 @@
     CHARACTER (LEN=100) :: Hed
 
     WRITE(*,*) 'Reading Basic information' 
-    READ(33,*) 
-    READ(33,*)
-    READ(33,'(A100)') Hed
+    READ(33,*,err=901) 
+    READ(33,*,err=901)
+    READ(33,'(A100)',err=901) Hed
     WRITE(*,*) 
     WRITE(*,*) Hed
-    READ(33,*) 
-    READ(33,*) LUnit,TUnit,MUnit
+    READ(33,*,err=901) 
+    READ(33,*,err=901) LUnit,TUnit,MUnit
     CALL Conversion(LUnit, TUnit, MUnit, xConv, tConv, mConv)
-    READ(33,*)
-    READ(33,*) lCheck,lWat,lChem,lTemp,lCrop,AtmBC
-    READ(33,*)
-    READ(33,*) Bup,Bdn,Drng,Dfit
+    READ(33,*,err=901)
+    READ(33,*,err=901) lCheck,lWat,lChem,lTemp,lCrop,AtmBC
+    READ(33,*,err=901)
+    READ(33,*,err=901) Bup,Bdn,Drng,Dfit
     WRITE(*,*) 'Reading Material information'
     READ(33,*)
     READ(33,*)
@@ -100,10 +100,14 @@
     CALL Examine1
     CLOSE(33)
     RETURN
-    END SUBROUTINE SelectorIN
+    
+901 Terr=1
+    RETURN
+    
+    END SUBROUTINE Selector_In
 
 ! ====================================================================
-!   Subroutine uzIN
+!   Subroutine Profile_In
 !
 !   Purpose: read information in the uz.in file for 1D model.
 ! ====================================================================                        
@@ -121,7 +125,7 @@
 ! =========================related functions==========================
 !   None.
 ! ====================================================================
-    SUBROUTINE uzIN
+    SUBROUTINE Profile_In
     USE parm
     CHARACTER (LEN=20) :: Text
     INTEGER (KIND=KI) :: i, j
@@ -130,25 +134,25 @@
 
 !   the Nlayer
     READ(32,*)
-    READ(32,*) Nlayer, Nobs
+    READ(32,*) Nlayer, NObs
     
-    IF (.NOT. ALLOCATED(dz)) ALLOCATE(dz(Nlayer))
-    IF (.NOT. ALLOCATED(zx)) ALLOCATE(zx(Nlayer+1))
-    IF (.NOT. ALLOCATED(MATuz)) ALLOCATE(MATuz(Nlayer))
-    IF (.NOT. ALLOCATED(th)) ALLOCATE(th(Nlayer))
-    IF (.NOT. ALLOCATED(Sink1d)) ALLOCATE(Sink1d(Nlayer))
-    IF (.NOT. ALLOCATED(Epi)) ALLOCATE(Epi(Nlayer))
-    IF (.NOT. ALLOCATED(Tri)) ALLOCATE(Tri(Nlayer))
-    IF (.NOT. ALLOCATED(dnn)) ALLOCATE(dnn(Nlayer))
-    IF (.NOT. ALLOCATED(Slope)) ALLOCATE(Slope(Nlayer))
+    IF (.NOT. ALLOCATED(dz       )) ALLOCATE(dz(Nlayer       ))
+    IF (.NOT. ALLOCATED(zx       )) ALLOCATE(zx(Nlayer+1     ))
+    IF (.NOT. ALLOCATED(MATuz    )) ALLOCATE(MATuz(Nlayer    ))
+    IF (.NOT. ALLOCATED(th       )) ALLOCATE(th(Nlayer       ))
+    IF (.NOT. ALLOCATED(Sink1d   )) ALLOCATE(Sink1d(Nlayer   ))
+    IF (.NOT. ALLOCATED(Epi      )) ALLOCATE(Epi(Nlayer      ))
+    IF (.NOT. ALLOCATED(Tri      )) ALLOCATE(Tri(Nlayer      ))
+    IF (.NOT. ALLOCATED(dnn      )) ALLOCATE(dnn(Nlayer      ))
+    IF (.NOT. ALLOCATED(Slope    )) ALLOCATE(Slope(Nlayer    ))
     IF (.NOT. ALLOCATED(Intercept)) ALLOCATE(Intercept(Nlayer))
-    IF (.NOT. ALLOCATED(par_n)) ALLOCATE(par_n(Nlayer))
+    IF (.NOT. ALLOCATED(par_n    )) ALLOCATE(par_n(Nlayer    ))
     
     zx = 0.0_KR
     dz = 0.0_KR
     MATuz = 0_KI
     th = 0.0_KR
-    
+
 !   the height.
     READ(32,*)
     READ(32,*) (zx(j),j=1,Nlayer+1,1) !bottom to surface!
@@ -160,6 +164,10 @@
 !   the material kind.
     READ(32,*)
     READ(32,*) (MATuz(j),j=1,Nlayer,1)
+    IF (NReg > 1) THEN
+        READ(32,*)
+        READ(32,*) (REGuz(j), j=1,Nlayer,1)
+    ENDIF    
     IF (NObs > 0) THEN
         IF (.NOT. ALLOCATED(Obs)) ALLOCATE(Obs(NObs))
         READ(32,*)
@@ -178,7 +186,7 @@
 110 FORMAT (///4x,5(5x,'Node(',i3,')',5x))
 120 FORMAT(/' time ',5(a20))
     RETURN
-    END SUBROUTINE uzIN
+    END SUBROUTINE Profile_In
 
 ! ====================================================================
 !   Subroutine Conversion   

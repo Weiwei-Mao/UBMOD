@@ -160,7 +160,7 @@
         Evatra = Evatra/1000_KI
         
     ELSEIF (bup == 2) THEN
-        OPEN(120,file='Rh1D.in/'//trim(iof)//'/'//'met.in',status='old')
+        OPEN(120,file=datapath(1:lenpath)//'/'//'met.in',status='old')
         READ(120,*)
         READ(120,*)Nup,Ndn
         READ(120,*)
@@ -180,7 +180,7 @@
 !     
 !   Purpose: Set the boundary input values
 ! ====================================================================
-    SUBROUTINE SetQ
+    SUBROUTINE Set_Input
     USE parm
     INTEGER (kind=KI) :: k, kk
     
@@ -195,7 +195,7 @@
         CALL FindY_Step(Nup,t,qair,up,k)
     ENDIF
    
-    END SUBROUTINE SetQ
+    END SUBROUTINE Set_Input
 
 ! ====================================================================
 !   Subroutine FindY_Step 

@@ -29,7 +29,7 @@
 ! ====================================================================
 !   storage Routing Method~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !   *************************end of documentation.	
-    PROGRAM WaterBalance
+    PROGRAM Main_Program
     USE parm
     IMPLICIT NONE
     REAL (KIND=KR) :: t1, t2, Zero
@@ -37,6 +37,7 @@
     CHARACTER (100) :: filename, datapath
 
     Zero = 0.0_KR
+    Terr = 0_KI
     
     filename = 'LEVEL_01.DIR'
     OPEN(10,file=filename, status='old',err=901)
@@ -60,9 +61,10 @@
 ! ====================================================================
 !     subroutine about input information.
 !     call for basic information. 
-    CALL SelectorIn
+    CALL Selector_In
+    IF (Terr.ne.0) GOTO (905) Terr
 !     call for node information in 1D.
-    CALL UzIn
+    CALL Profile_In
 ! ====================================================================
 
 !-----preparation of the calculation
@@ -82,7 +84,7 @@
 
 ! ====================================================================
 !   Set upper boundary condition.
-    CALL SetQ
+    CALL Set_Input
   
 ! ====================================================================
 !     Four main processes.
@@ -99,16 +101,19 @@
 ! ====================================================================
 !     Secondly, advective movement driven by gravitational potential.
 !       "Tipping-bucket" method.
-    CALL redistribution
+    CALL Water_Redis
+    IF (Terr.ne.0) GOTO (930) Terr
 
 ! ====================================================================
 !     Thirdly, source/sink term.
 !     open the Files that stored E&T and the rain, and the writen ETa.
-    IF(bup >= Zero) CALL SetET
+    IF(bup >= Zero) CALL Water_SetET
+    IF (Terr.ne.0) GOTO (931) Terr
 
 ! ====================================================================
 !     Last, Diffusive soil water movement driven by matric potential.
-    CALL unsatflow
+    CALL Water_Diff
+    IF (Terr.ne.0) GOTO (932) Terr
 
 ! ====================================================================
 !     Output control.
@@ -158,7 +163,7 @@
     CLOSE(110) 
     CLOSE(130)
     CLOSE(150) 
-    
+
     STOP
     
 901 ierr=1
@@ -169,21 +174,36 @@
     GOTO 999
 904 ierr=4
     GOTO 999
+905 ierr=5
+    GOTO 999
+930 ierr=30
+    GOTO 999
+931 ierr=31
+    GOTO 999
+932 ierr=32
+    GOTO 999
 
-999 CALL ErrorOut(ierr)
+999 CALL Error_Out(ierr)
+    PAUSE
     STOP
     
-    END PROGRAM WaterBalance
-
+    END PROGRAM Main_Program
     
-    SUBROUTINE ErrorOut(ierr)
+    SUBROUTINE Error_Out(ierr)
     IMPLICIT NONE
     INTEGER (KIND=4) :: ierr
-    CHARACTER (LEN=100), DIMENSION(30) :: cErr
-    
+    CHARACTER (LEN=100), DIMENSION(40) :: cErr
+
     cErr( 1)='Open file error in file LEVEL_01.DIR !'
     cErr( 2)='Open file error for input files !'
     cErr( 3)='Open file error for output files !'
     cErr( 4)='Error when reading from an input file LEVEL_01.DIR !'
+    cErr( 5)='Error when reading from an input file Selector.in !'
+    cErr(30)='Mass balance error in Water_Redis module !'
+    cErr(31)='Mass balance error in Water_SetET module !'
+    cErr(32)='Mass balance error in Water_Diff module !'
     
-    END SUBROUTINE ErrorOut
+    WRITE(*,*) cErr(ierr)
+    WRITE(99,*) cErr(ierr)
+    
+    END SUBROUTINE Error_Out

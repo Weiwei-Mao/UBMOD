@@ -71,7 +71,7 @@
         READ(4,*)date1,Nouse,ET0,Ep,Tp
         READ(5,*)Nouse,Nouse,rd            
 
-        dtp=amax1(0.05*ET0,0.05)
+        dtp=max(0.05*ET0, 0.05)
         dtp=dtp/4.
         DO jj=1,4
           work(jj)=sp(jj,num)
@@ -117,18 +117,17 @@
     USE parm, ONLY : KR, KI
     IMPLICIT NONE
     
-    LOGICAL :: AtmBC
+    LOGICAL (KIND=4) :: AtmBC
     CHARACTER (LEN=6) :: cha1, cha2, cha3
     CHARACTER (LEN=8) :: dateini
     CHARACTER (LEN=100) :: datapath
-    INTEGER (KIND=KI) :: i,year,month,day,julie,DM,interval
+    INTEGER (KIND=KI) ::interval
     !INTEGER (kind=KI) :: yearini, monthini, dayini
-    INTEGER (KIND=KI) :: num, ierr
+    INTEGER (KIND=4) :: num, ierr, i, year, month, day, julie, DM, lenpath
     REAL (KIND=KR) :: tmean,tmax,tmin,nact,rhmean,uh,ea,deta,dr,si,tansi,&
     tmean1,ws,ra,np,rns,eamax,eamin,ed,rnl,rn,g,lamta,u2,gama,ato_p,et0,dt,PE
     REAL (KIND=KR) :: fai,hhh,hu
     REAL (KIND=KR) :: aa, ckc, claif, etc, ep, tp
-    INTEGER (KIND=4) :: lenpath
 
     lenpath = Len_Trim(datapath)
     cha1="??.wea"
@@ -196,21 +195,18 @@
     USE parm, ONLY : KR, KI
     IMPLICIT NONE
 
-    CHARACTER (len=8) :: Dateini     ! Beginning time
-    CHARACTER (len=8) :: Date
-    CHARACTER (len=8) :: Date1
+    CHARACTER (len=8) :: Dateini, Date, Date1     ! Beginning time
     CHARACTER (len=8), DIMENSION(5) :: da
     CHARACTER (len=6) :: nameF
     CHARACTER (len=10) :: cha1
     CHARACTER (LEN=100) :: datapath
     INTEGER (kind=KI) interval	! the simulation period
-    INTEGER (kind=KI), DIMENSION(5) :: jd
-    INTEGER (kind=KI) :: numc, nyear, nyear1, ndyear, JDATE, jd1, jmax, nyrr
-    INTEGER (kind=KI) :: i, j, k
-    REAL (kind=KR), DIMENSION(21) :: crpdat
-    REAL (kind=KR) :: f, ckc1, ckc2, ckc3, rd1, rd2, clai1, clai2, clai3, clai4
-    REAL (kind=KR) :: ckc, rd, clai, claif
-    INTEGER (KIND=4) :: lenpath, num
+    INTEGER (KIND=4), DIMENSION(5) :: jd
+    INTEGER (KIND=4) :: numc, nyear, nyear1, ndyear, JDATE, jd1, jmax, nyrr
+    REAL (KIND=KR), DIMENSION(21) :: crpdat
+    REAL (KIND=KR) :: f, ckc1, ckc2, ckc3, rd1, rd2, clai1, clai2, clai3, clai4
+    REAL (KIND=KR) :: ckc, rd, clai, claif
+    INTEGER (KIND=4) :: lenpath, num, i, j, k
     
     lenpath = Len_Trim(datapath)   
     namef="??.crp"
@@ -239,11 +235,11 @@
     ENDDO
 
     DO i=1,5
-        jd(i)=jdate(da(i))
+        jd(i)=Jdate(da(i))
     ENDDO
     
     date=dateini
-    jd1=jdate(date)
+    jd1=Jdate(date)
 
     DO i=1,interval
         IF (jd1<jd(1).or.jd1>jd(5))THEN
@@ -307,11 +303,12 @@
     USE parm
     IMPLICIT NONE
 
-    REAL (kind=KR), DIMENSION(NlayerD) :: dz1
-    REAL (kind=KR), DIMENSION(NlayerD) :: dense
-    REAL (kind=KR), DIMENSION(10) :: work
-    REAL (kind=KR) :: r2, re, r1
-    INTEGER (kind=KI) :: i, j, L, N1, mlayer
+    REAL (KIND=KR), DIMENSION(NlayerD) :: dz1
+    REAL (KIND=KR), DIMENSION(NlayerD) :: dense
+    REAL (KIND=KR), DIMENSION(10) :: work
+    REAL (KIND=KR) :: r2, re, r1
+    INTEGER (KIND=KI) :: mlayer
+    INTEGER (KIND=4) ::  i, j, L, N1
     
     DO i=1,mlayer
         dense(i)=0.0
@@ -362,12 +359,11 @@
     USE parm, ONLY : KR, KI
     IMPLICIT NONE
 
-    INTEGER (kind=KI) :: numc, i
     REAL (kind=KR), DIMENSION(21) :: crpdat
     CHARACTER (len=8), DIMENSION(5) :: da
     CHARACTER (len=10) :: nameC	
     CHARACTER (LEN=100) :: datapath
-    INTEGER (KIND=4) :: lenpath
+    INTEGER (KIND=4) :: lenpath, i, numc
 
     lenpath = Len_Trim(datapath)
     OPEN(1,file=datapath(1:lenpath)//'/cropdat.dat',status="old")
@@ -412,8 +408,8 @@
     USE parm, ONLY : KR, KI
     IMPLICIT NONE
 
-    INTEGER (KIND=KI), DIMENSION(12) :: Dm ! Calculation ordinal number
-    INTEGER (KIND=KI) :: i,year,month,day,julie
+    INTEGER (KIND=4), DIMENSION(12) :: Dm ! Calculation ordinal number
+    INTEGER (KIND=4) :: i,year,month,day,julie
     REAL (KIND=KR) :: tmean,tmax,tmin,nact,rhmean,uh,ea,deta,dr,si,tansi, &
          tmean1,ws,ra,np,rns,eamax,eamin,ed,rnl,rn,g,lamta,u2,gama,ato_p,et0
     REAL (KIND=KR) :: fai, hhh, hu, amta
