@@ -60,29 +60,29 @@
     READ(33,*,err=901)
     READ(33,*,err=901) Bup,Bdn,Drng,Dfit
     WRITE(*,*) 'Reading Material information'
-    READ(33,*)
-    READ(33,*)
-    READ(33,*) NMat,NReg,NPar,CosAlf
-    READ(33,*) 
+    READ(33,*,err=902)
+    READ(33,*,err=902)
+    READ(33,*,err=902) NMat,NReg,NPar,CosAlf
+    READ(33,*,err=902) 
     DO i=1,NMat
-    READ(33,*) (Par(j,i),j=1,NPar),thF(i),thW(i),(sp(j,i),j=1,4)
+        READ(33,*,err=902) (Par(j,i),j=1,NPar),thF(i),thW(i),(sp(j,i),j=1,4)
         ths(i)=par(2,i)
-    par(4,i) = par(4,i)*tConv/xConv
+        par(4,i) = par(4,i)*tConv/xConv
     ENDDO
 
     WRITE(*,*) 'Reading Time information'
-    READ(33,*)
-    READ(33,*)
-    READ(33,*) dt,ddn,MPL!,MMPL
+    READ(33,*,err=903)
+    READ(33,*,err=903)
+    READ(33,*,err=903) dt,ddn,MPL!,MMPL
     dt = dt/tConv
     dtOld = dt
-    READ(33,*)
+    READ(33,*,err=903)
     MaxAL = 0
-    READ(33,*) date,tinit,tEnd,MaxAL
+    READ(33,*,err=903) date,tinit,tEnd,MaxAL
     t = tinit/tConv+dt
     tEnd = tEnd/tConv
-    READ(33,*)
-    READ(33,*) (TPrint(i),i=1,MPL)
+    READ(33,*,err=903)
+    READ(33,*,err=903) (TPrint(i),i=1,MPL)
 !   READ(33,*)
 !   READ(33,*) (TB(i),i=1,MMPL)
 !    interval=int(tEnd-t+0.99_KR)! The total simulation period.
@@ -102,6 +102,10 @@
     RETURN
     
 901 Terr=1
+    RETURN
+902 Terr=2
+    RETURN
+903 Terr=3
     RETURN
     
     END SUBROUTINE Selector_In
@@ -133,8 +137,8 @@
     WRITE(*,*) 'Reading information for unsaturated zone'
 
 !   the Nlayer
-    READ(32,*)
-    READ(32,*) Nlayer, NObs
+    READ(32,*,err=901)
+    READ(32,*,err=901) Nlayer, NObs
     
     IF (.NOT. ALLOCATED(dz       )) ALLOCATE(dz(Nlayer       ))
     IF (.NOT. ALLOCATED(zx       )) ALLOCATE(zx(Nlayer+1     ))
@@ -154,31 +158,31 @@
     th = 0.0_KR
 
 !   the height.
-    READ(32,*)
-    READ(32,*) (zx(j),j=1,Nlayer+1,1) !bottom to surface!
+    READ(32,*,err=901)
+    READ(32,*,err=901) (zx(j),j=1,Nlayer+1,1) !bottom to surface!
     zx = zx/xConv
     
     DO j=1,Nlayer
         dz(j)=zx(j+1)-zx(j) ! The thickness of each layer
     ENDDO	 
 !   the material kind.
-    READ(32,*)
-    READ(32,*) (MATuz(j),j=1,Nlayer,1)
+    READ(32,*,err=901)
+    READ(32,*,err=901) (MATuz(j),j=1,Nlayer,1)
     IF (NReg > 1) THEN
-        READ(32,*)
-        READ(32,*) (REGuz(j), j=1,Nlayer,1)
+        READ(32,*,err=901)
+        READ(32,*,err=901) (REGuz(j), j=1,Nlayer,1)
     ENDIF    
     IF (NObs > 0) THEN
         IF (.NOT. ALLOCATED(Obs)) ALLOCATE(Obs(NObs))
-        READ(32,*)
-        READ(32,*) (Obs(j),j=1,NObs,1)
+        READ(32,*,err=901)
+        READ(32,*,err=901) (Obs(j),j=1,NObs,1)
         Text ='   Theta      '
         WRITE(80,110) (Obs(j),j=1,NObs,1)
         WRITE(80,120) (Text,j=1,NObs,1)
     ENDIF    
 !   the initial profile moisture.
-    READ(32,*)
-    READ(32,*) (th(j),j=1,Nlayer,1)
+    READ(32,*,err=901)
+    READ(32,*,err=901) (th(j),j=1,Nlayer,1)
     
     CALL Examine2
     
@@ -186,6 +190,10 @@
 110 FORMAT (///4x,5(5x,'Node(',i3,')',5x))
 120 FORMAT(/' time ',5(a20))
     RETURN
+    
+901 Terr=1
+    RETURN
+
     END SUBROUTINE Profile_In
 
 ! ====================================================================
@@ -264,9 +272,8 @@
 ! ====================================================================
     SUBROUTINE Examine1
     USE parm 
-
+    
     INTEGER (kind=4) :: Err
-
     Err = 0
 
 !   Examine the Number of Hydraulic Parameters

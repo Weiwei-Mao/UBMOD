@@ -62,9 +62,10 @@
 !     subroutine about input information.
 !     call for basic information. 
     CALL Selector_In
-    IF (Terr.ne.0) GOTO (905) Terr
+    IF (Terr.ne.0) GOTO (905, 906, 907) Terr
 !     call for node information in 1D.
     CALL Profile_In
+    IF (Terr.ne.0) GOTO 908
 ! ====================================================================
 
 !-----preparation of the calculation
@@ -77,6 +78,7 @@
     CALL Diffusion_Model
 !     Call for reference Evaportranspiration and division of E&T.
     CALL Upper_Boundary(datapath)
+    IF (Terr.ne.0) GOTO (909,910,911,903) Terr
 ! ====================================================================
 
 !-----Begin time loop.
@@ -176,6 +178,18 @@
     GOTO 999
 905 ierr=5
     GOTO 999
+906 ierr=6
+    GOTO 999
+907 ierr=7
+    GOTO 999
+908 ierr=8
+    GOTO 999
+909 ierr=9
+    GOTO 999
+910 ierr=10
+    GOTO 999
+911 ierr=11
+    GOTO 999
 930 ierr=30
     GOTO 999
 931 ierr=31
@@ -196,9 +210,16 @@
 
     cErr( 1)='Open file error in file LEVEL_01.DIR !'
     cErr( 2)='Open file error for input files !'
-    cErr( 3)='Open file error for output files !'
+    cErr( 3)='Error when opening or writing to an output file !'
     cErr( 4)='Error when reading from an input file LEVEL_01.DIR !'
-    cErr( 5)='Error when reading from an input file Selector.in !'
+    cErr( 5)='Error when reading from an input file Selector.in Basic Information !'
+    cErr( 6)='Error when reading from an input file Selector.in Material Information !'
+    cErr( 7)='Error when reading from an input file Selector.in Time Information !'
+    cErr( 8)='Error when reading from an input file Profile.in !'
+    cErr( 9)='Error when opening or reading from an input file 01.wea !'
+    cErr(10)='Error when opening or reading from an input file cropdat.dat !'
+    cErr(11)='Error when opening or reading from an input file crp/et0/eti !'
+    cErr(12)='Dimension of the Array is exceeded !'
     cErr(30)='Mass balance error in Water_Redis module !'
     cErr(31)='Mass balance error in Water_SetET module !'
     cErr(32)='Mass balance error in Water_Diff module !'

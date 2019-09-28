@@ -55,21 +55,23 @@
     ENDDO
 
     CALL Crop(datapath,num,numc,date1,MaxAL)
+    IF (Terr.ne.0) RETURN
     CALL ep_tp(datapath,num,date1,MaxAL,AtmBC)
+    IF (Terr.ne.0) RETURN
 
     WRITE(cha1(1:2),"(i2.2)")num
     WRITE(cha2(1:2),"(i2.2)")num
     WRITE(cha3(1:2),"(i2.2)")num
-    OPEN(4,file=datapath(1:lenpath)//'/'//cha1,status="unknown")
-    OPEN(5,file=datapath(1:lenpath)//'/'//cha2,status="unknown")
-    OPEN(6,file=datapath(1:lenpath)//'/'//cha3,status="unknown")
-    WRITE(6,*)"date ordinal Es(1:Nlayer)/mm    TS(1:Nlayer)/mm"
-    READ(4,*)cha1
-    READ(5,*)cha1
+    OPEN(4,file=datapath(1:lenpath)//'/'//cha1,status="unknown",err=901)
+    OPEN(5,file=datapath(1:lenpath)//'/'//cha2,status="unknown",err=901)
+    OPEN(6,file=datapath(1:lenpath)//'/'//cha3,status="unknown",err=901)
+    WRITE(6,*,err=901)"date ordinal Es(1:Nlayer)/mm    TS(1:Nlayer)/mm"
+    READ(4,*,err=901)cha1
+    READ(5,*,err=901)cha1
 
     DO j=1,MaxAL
-        READ(4,*)date1,Nouse,ET0,Ep,Tp
-        READ(5,*)Nouse,Nouse,rd            
+        READ(4,*,err=901)date1,Nouse,ET0,Ep,Tp
+        READ(5,*,err=901)Nouse,Nouse,rd            
 
         dtp=max(0.05*ET0, 0.05)
         dtp=dtp/4.
@@ -79,6 +81,7 @@
         CALL Fdense(Nlayer,dz1,dtp,work,sed,4)
 
         CALL cdatebase(datapath,numc,da,crpdat)
+        IF (Terr.ne.0) RETURN
         DO jj=1,10
             work(jj)=crpdat(jj+10)
         ENDDO
@@ -88,11 +91,15 @@
             sed(k)=sed(k)*ep
             dense(k)=dense(k)*tp
         ENDDO
-        WRITE(6,"(A9,I6,260f6.3)")date1,i,sed(1:Nlayer),dense(1:Nlayer)
+        WRITE(6,"(A9,I6,260f6.3)",err=901)date1,i,sed(1:Nlayer),dense(1:Nlayer)
     ENDDO
     CLOSE(4)
     CLOSE(5) 
     CLOSE(6)
+    RETURN
+    
+901 Terr=3
+    RETURN
     END SUBROUTINE ETp
 
 ! ====================================================================
@@ -114,7 +121,7 @@
 !   None.
 ! ====================================================================
     SUBROUTINE ep_tp(datapath,num,dateini,interval,AtmBC)
-    USE parm, ONLY : KR, KI
+    USE parm, ONLY : KR, KI, Terr
     IMPLICIT NONE
     
     LOGICAL (KIND=4) :: AtmBC
@@ -136,41 +143,47 @@
     WRITE(cha1(1:2),"(i2.2)")num
     WRITE(cha2(1:2),"(i2.2)")num
     WRITE(cha3(1:2),"(i2.2)")num
-    OPEN(1,file=datapath(1:lenpath)//'/'//cha1,status="old")
-    OPEN(3,file=datapath(1:lenpath)//'/'//cha3,status="old")
-    OPEN(2,file=datapath(1:lenpath)//'/'//cha2,status="unknown")
+    OPEN(1,file=datapath(1:lenpath)//'/'//cha1,status="old",err=901)
+    OPEN(3,file=datapath(1:lenpath)//'/'//cha3,status="old",err=902)
+    OPEN(2,file=datapath(1:lenpath)//'/'//cha2,status="unknown",err=902)
     WRITE(2,*)"year month day ordinal et0 ep tp	pe"
-    read(3,*) !/lai and kc/
+    read(3,*,err=902) !/lai and kc/
     
     IF (AtmBC) THEN
-        read(1,*)
-        read(1,*)fai,hhh,hu
-        read(1,*)
+        read(1,*,err=901)
+        read(1,*,err=901)fai,hhh,hu
+        read(1,*,err=901)
     ELSE
-        read(1,*)
+        read(1,*,err=901)
     ENDIF
 		
     DO i=1,interval
         IF (AtmBC) THEN
-            READ(1,*,iostat=ierr)year,month,day,tmean,tmax,tmin,nact,rhmean,uh,ato_p,PE
+            READ(1,*,err=901)year,month,day,tmean,tmax,tmin,nact,rhmean,uh,ato_p,PE
             CALL Refet(year,month,day,Tmean,tmax,tmin,nact,RHmean,uh,hu,ato_p,hhh,fai,ET0,tmean1)
         ELSEIF (.not.AtmBC) THEN
-            READ(1,*)year,month,day,et0,PE
+            READ(1,*,err=901)year,month,day,et0,PE
         ENDIF
 
-        READ(3,*)aa,aa,ckc,aa,aa,CLAif
+        READ(3,*,err=902)aa,aa,ckc,aa,aa,CLAif
         ETc=ckc*ET0 
         
 !        CLAIF = 0.25    !2017-06-02
         
         Ep=cLAIf*ETc    !CLAI exp[-f*LAI]
         Tp=ETc-Ep 
-        WRITE(2,"(i4,i2.2,i2.2,i6,4f8.3)")year,month,day,i,et0,ep,tp,PE
+        WRITE(2,"(i4,i2.2,i2.2,i6,4f8.3)",err=902)year,month,day,i,et0,ep,tp,PE
     ENDDO
     CLOSE(1)
     CLOSE(2)
     CLOSE(3)
     RETURN
+    
+901 Terr=1
+    RETURN
+902 Terr=3
+    RETURN
+
     END SUBROUTINE ep_tp
 
 ! ====================================================================
@@ -192,7 +205,7 @@
 !   None.
 ! ====================================================================	
     SUBROUTINE Crop(datapath,num,numc,dateini,interval)
-    USE parm, ONLY : KR, KI
+    USE parm, ONLY : KR, KI, Terr
     IMPLICIT NONE
 
     CHARACTER (len=8) :: Dateini, Date, Date1     ! Beginning time
@@ -211,9 +224,10 @@
     lenpath = Len_Trim(datapath)   
     namef="??.crp"
     WRITE(namef(1:2),"(i2.2)")num
-    OPEN(11,file=datapath(1:lenpath)//'/'//nameF,status="unknown")
+    OPEN(11,file=datapath(1:lenpath)//'/'//nameF,status="unknown",err=901)
     WRITE(11,*)"date    ordinal Kc  rootdepth   LAI LAIF    rp(1:Nlayer)"
     CALL cdatebase(datapath,numc,da,crpdat)
+    IF (Terr.ne.0) RETURN
 
     f=crpdat(1)
     ckc1=crpdat(2)
@@ -277,6 +291,11 @@
         ENDIF
     ENDDO
     CLOSE(11)
+    RETURN
+
+901 Terr=3
+    RETURN
+    
     END SUBROUTINE Crop
 
 ! ====================================================================
@@ -356,7 +375,7 @@
 !   None.
 ! ====================================================================
     SUBROUTINE cdatebase(datapath,Numc,da,crpdat)
-    USE parm, ONLY : KR, KI
+    USE parm, ONLY : KR, KI, Terr
     IMPLICIT NONE
 
     REAL (kind=KR), DIMENSION(21) :: crpdat
@@ -366,14 +385,18 @@
     INTEGER (KIND=4) :: lenpath, i, numc
 
     lenpath = Len_Trim(datapath)
-    OPEN(1,file=datapath(1:lenpath)//'/cropdat.dat',status="old")
+    OPEN(1,file=datapath(1:lenpath)//'/cropdat.dat',status="old",err=901)
     
     DO i=1,numc-1
-        READ(1,*)
+        READ(1,*,err=901)
     ENDDO
-    READ(1,*)nameC,da(1:5),crpdat(1:21)
+    READ(1,*,err=901)nameC,da(1:5),crpdat(1:21)
 
     CLOSE(1)
+    RETURN
+    
+901 Terr=2
+    RETURN
     END SUBROUTINE cdatebase
 
 ! ====================================================================

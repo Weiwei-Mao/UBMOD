@@ -142,19 +142,20 @@
     lenpath = Len_Trim(datapath)
     IF (bup == 1) THEN  
         CALL Etp(1,datapath)
-        OPEN(110,file=datapath(1:lenpath)//'/'//'01.et0',status='old')
-        READ(110,*)
-        OPEN(130,file=datapath(1:lenpath)//'/'//'01.eti',status='old')
-        OPEN(150,file=datapath(1:lenpath)//'/'//'eta.dat',status='unknown')
-        WRITE(150,*)"Variables=DoY,   Ea,   Ta,   Date"
-        READ(130,*)
+        IF (Terr.ne.0) RETURN
+        OPEN(110,file=datapath(1:lenpath)//'/'//'01.et0',status='old',err=901)
+        READ(110,*,err=901)
+        OPEN(130,file=datapath(1:lenpath)//'/'//'01.eti',status='old',err=901)
+        OPEN(150,file=datapath(1:lenpath)//'/'//'eta.dat',status='unknown',err=902)
+        WRITE(150,*,err=902)"Variables=DoY,   Ea,   Ta,   Date"
+        READ(130,*,err=901)
                 
         IF (.NOT. ALLOCATED(precip)) ALLOCATE(precip(2,MaxAL))
         IF (.NOT. ALLOCATED(Evatra)) ALLOCATE(Evatra(2*Nlayer,MaxAL))
         
         DO i = 1,MaxAL
-            READ(110,*) Nouse,precip(1,i),Nouse,Nouse,Nouse,precip(2,i)
-            READ(130,*) Nouse,Nouse,(Evatra(j,i),j=1,2*Nlayer)
+            READ(110,*,err=901) Nouse,precip(1,i),Nouse,Nouse,Nouse,precip(2,i)
+            READ(130,*,err=901) Nouse,Nouse,(Evatra(j,i),j=1,2*Nlayer)
         ENDDO
         precip(2,:) = precip(2,:)/1000_KI
         Evatra = Evatra/1000_KI
@@ -172,7 +173,12 @@
         READ(120,*)
         READ(120,*)(dn(2,i),i=1,Ndn)
     ENDIF
-   
+    RETURN
+    
+901 Terr=3
+    RETURN
+902 Terr=4
+    RETURN
     END SUBROUTINE Upper_Boundary
     
 ! ====================================================================
