@@ -92,6 +92,11 @@
     IF(lchem) THEN
         PAUSE
     ENDIF
+!   The temperature module.
+    IF(lTemp) THEN
+        PAUSE
+    ENDIF
+    
     CALL Examine1
     CLOSE(33)
     RETURN

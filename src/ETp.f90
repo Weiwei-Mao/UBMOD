@@ -27,7 +27,7 @@
 !                      discreted layers
 !       Ep_Tp          Call for Ep[mm] and Tp[mm]
 ! ====================================================================
-    SUBROUTINE ETp(Num,datapath)
+    SUBROUTINE ETp(num,datapath)
     USE parm
     IMPLICIT NONE
 
@@ -118,9 +118,7 @@
     IMPLICIT NONE
     
     LOGICAL :: AtmBC
-    CHARACTER (LEN=6) :: cha1
-    CHARACTER (LEN=6) :: cha2
-    CHARACTER (LEN=6) :: cha3
+    CHARACTER (LEN=6) :: cha1, cha2, cha3
     CHARACTER (LEN=8) :: dateini
     CHARACTER (LEN=100) :: datapath
     INTEGER (KIND=KI) :: i,year,month,day,julie,DM,interval

@@ -1,6 +1,6 @@
 ! ===================================================================!
 !   UBMOD  -- Water balance method of one-dimensional soil water     !
-!             movement. Version 1.0.                                 !
+!             movement. Version 1.10.                                !
 !                                                                    !
 !   Designed by Wei Mao, Yan Zhu and Jinzhong Yang.                  !
 !                                                                    !
@@ -12,7 +12,7 @@
 !   Feel free to contact us if you have any question.                !
 !       Email: weimao@whu.edu.cn, zyan0701@163.com                   !
 !                                                                    !
-!                            Last modified: Jul, 2019, by Wei Mao.   !
+!                            Last modified: Sep, 2019, by Wei Mao.   !
 ! ===================================================================!
 ! ====================================================================
 !     Input files:
@@ -180,5 +180,10 @@
     IMPLICIT NONE
     INTEGER (KIND=4) :: ierr
     CHARACTER (LEN=100), DIMENSION(30) :: cErr
+    
+    cErr( 1)='Open file error in file LEVEL_01.DIR !'
+    cErr( 2)='Open file error for input files !'
+    cErr( 3)='Open file error for output files !'
+    cErr( 4)='Error when reading from an input file LEVEL_01.DIR !'
     
     END SUBROUTINE ErrorOut
