@@ -1,0 +1,17 @@
+sim111 case 1, the 1st drainage equation
+sim112 case 1, the 2nd drainage equation
+sim113 case 1, the 3rd drainage equation
+sim114 case 1, the 4th drainage equation
+sim115 case 1, the 5th drainage equation
+
+sim211 case 2, the 1st drainage equation
+sim212 case 2, the 2nd drainage equation
+sim213 case 2, the 3rd drainage equation
+sim214 case 2, the 4th drainage equation
+sim215 case 2, the 5th drainage equation
+
+sim311 case 3, dz 2 cm£¬dt 0.1 d
+sim321 case 3, dz 10 cm, dt 0.1 d
+sim322 case 3, dz 10 cm, dt 1 d
+sim323 case 3, dz 20 cm, dt 0.1 d
+sim324 case 3, dz 20 cm, dt 1 d

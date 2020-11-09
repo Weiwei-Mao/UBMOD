@@ -6,17 +6,17 @@ m	days	kg
 lCheck	lWat	lChem	lTemp	lCrop	AtmBC
 T	T	F	F	F	F
 Bup	Bdn	Drng	Dfit
--1	0	1	1
+1	0	2	1
 *** BLOCK B: MATERIAL INFORMATION **************************************
 NMat	NReg	NPar	CosAlf
 1	1	5	1
 thr	ths	Alfa	n	Ks	thF	thW	sp(1:4)
-0.078	0.43	0.8	1.09	0.2496	0.27	0.1	0.4	0.7	0.9	1
+0.078	0.43	12.6	1.09	0.2496	0.27	0.1	0.4	0.7	0.9	1
 *** BLOCK C: TIME INFORMATION ******************************************
 dt	ddn	MPL
-0.5	10	2
+0.1	10	10
 date		tInit	tEnd	MaxAL
-20050101	0	30	0
+20050101	0	365	365
 TPrint(1),TPrint(2),...,TPrint(MPL)
-1	30
+5 10 15 20 25 30 35 40 45 365
 *** END OF INPUT FILE 'SELECTOR.IN' ************************************

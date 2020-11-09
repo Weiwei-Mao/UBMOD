@@ -6,7 +6,7 @@ m	days	kg
 lCheck	lWat	lChem	lTemp	lCrop	AtmBC
 T	T	F	F	F	F
 Bup	Bdn	Drng	Dfit
--1	0	1	1
+-1	0	4	1
 *** BLOCK B: MATERIAL INFORMATION **************************************
 NMat	NReg	NPar	CosAlf
 1	1	5	1
