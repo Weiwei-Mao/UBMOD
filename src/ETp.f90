@@ -27,7 +27,7 @@
 !                      discreted layers
 !       Ep_Tp          Call for Ep[mm] and Tp[mm]
 ! ====================================================================
-    SUBROUTINE ETp(Num)
+    SUBROUTINE ETp(num,datapath)
     USE parm
     IMPLICIT NONE
 
@@ -39,9 +39,11 @@
     CHARACTER (LEN=6) :: cha1, cha2, cha3
     CHARACTER (LEN=8) :: date1
     CHARACTER (LEN=8), DIMENSION(5) :: da
-    INTEGER (KIND=4) :: i,j,k,jj,num
+    CHARACTER (LEN=100) :: datapath
+    INTEGER (KIND=4) :: i,j,k,jj,num,lenpath
     REAL (KIND=KR) :: ET0, EP, TP, Nouse, rd, dtp
 
+    lenpath = Len_Trim(datapath)
     cha1="??.et0"
     cha2="??.crp"
     cha3="??.eti"
@@ -52,31 +54,34 @@
         dz1(i)=zx(i+1)  
     ENDDO
 
-    CALL Crop(num,numc,date1,MaxAL,iof)
-    CALL ep_tp(num,date1,MaxAL,iof,ifet)
+    CALL Crop(datapath,num,numc,date1,MaxAL)
+    IF (Terr.ne.0) RETURN
+    CALL ep_tp(datapath,num,date1,MaxAL,AtmBC)
+    IF (Terr.ne.0) RETURN
 
     WRITE(cha1(1:2),"(i2.2)")num
     WRITE(cha2(1:2),"(i2.2)")num
     WRITE(cha3(1:2),"(i2.2)")num
-    OPEN(4,file='Rh1D.in/'//trim(iof)//'/'//cha1,status="unknown")
-    OPEN(5,file='Rh1D.in/'//trim(iof)//'/'//cha2,status="unknown")
-    OPEN(6,file='Rh1D.in/'//trim(iof)//'/'//cha3,status="unknown")
-    WRITE(6,*)"date ordinal Es(1:Nlayer)/mm    TS(1:Nlayer)/mm"
-    READ(4,*)cha1
-    READ(5,*)cha1
+    OPEN(4,file=datapath(1:lenpath)//'/'//cha1,status="unknown",err=901)
+    OPEN(5,file=datapath(1:lenpath)//'/'//cha2,status="unknown",err=901)
+    OPEN(6,file=datapath(1:lenpath)//'/'//cha3,status="unknown",err=901)
+    WRITE(6,*,err=901)"date ordinal Es(1:Nlayer)/mm    TS(1:Nlayer)/mm"
+    READ(4,*,err=901)cha1
+    READ(5,*,err=901)cha1
 
     DO j=1,MaxAL
-        READ(4,*)date1,Nouse,ET0,Ep,Tp
-        READ(5,*)Nouse,Nouse,rd            
+        READ(4,*,err=901)date1,Nouse,ET0,Ep,Tp
+        READ(5,*,err=901)Nouse,Nouse,rd            
 
-        dtp=amax1(0.05*ET0,0.05)
+        dtp=max(0.05*ET0, 0.05)
         dtp=dtp/4.
         DO jj=1,4
           work(jj)=sp(jj,num)
         ENDDO
         CALL Fdense(Nlayer,dz1,dtp,work,sed,4)
 
-        CALL cdatebase(numc,da,crpdat,iof)
+        CALL cdatebase(datapath,numc,da,crpdat)
+        IF (Terr.ne.0) RETURN
         DO jj=1,10
             work(jj)=crpdat(jj+10)
         ENDDO
@@ -86,11 +91,15 @@
             sed(k)=sed(k)*ep
             dense(k)=dense(k)*tp
         ENDDO
-        WRITE(6,"(A9,I6,260f6.3)")date1,i,sed(1:Nlayer),dense(1:Nlayer)
+        WRITE(6,"(A9,I6,260f6.3)",err=901)date1,i,sed(1:Nlayer),dense(1:Nlayer)
     ENDDO
     CLOSE(4)
     CLOSE(5) 
     CLOSE(6)
+    RETURN
+    
+901 Terr=3
+    RETURN
     END SUBROUTINE ETp
 
 ! ====================================================================
@@ -111,65 +120,70 @@
 ! =========================related functions==========================
 !   None.
 ! ====================================================================
-    SUBROUTINE ep_tp(num,dateini,interval,iof,ifet)
-    USE parm, ONLY : KR, KI
+    SUBROUTINE ep_tp(datapath,num,dateini,interval,AtmBC)
+    USE parm, ONLY : KR, KI, Terr
     IMPLICIT NONE
     
-    LOGICAL :: ifet
-    CHARACTER (LEN=6) :: cha1
-    CHARACTER (LEN=6) :: cha2
-    CHARACTER (LEN=6) :: cha3
-    CHARACTER (LEN=9) :: iof
+    LOGICAL (KIND=4) :: AtmBC
+    CHARACTER (LEN=6) :: cha1, cha2, cha3
     CHARACTER (LEN=8) :: dateini
-    INTEGER (KIND=KI) :: i,year,month,day,julie,DM,interval
+    CHARACTER (LEN=100) :: datapath
+    INTEGER (KIND=KI) ::interval
     !INTEGER (kind=KI) :: yearini, monthini, dayini
-    INTEGER (KIND=KI) :: num, ierr
+    INTEGER (KIND=4) :: num, ierr, i, year, month, day, julie, DM, lenpath
     REAL (KIND=KR) :: tmean,tmax,tmin,nact,rhmean,uh,ea,deta,dr,si,tansi,&
     tmean1,ws,ra,np,rns,eamax,eamin,ed,rnl,rn,g,lamta,u2,gama,ato_p,et0,dt,PE
     REAL (KIND=KR) :: fai,hhh,hu
     REAL (KIND=KR) :: aa, ckc, claif, etc, ep, tp
 
+    lenpath = Len_Trim(datapath)
     cha1="??.wea"
     cha2="??.et0"
     cha3="??.crp"
     WRITE(cha1(1:2),"(i2.2)")num
     WRITE(cha2(1:2),"(i2.2)")num
     WRITE(cha3(1:2),"(i2.2)")num
-    OPEN(1,file='Rh1D.in/'//trim(iof)//'/'//cha1,status="old")
-    OPEN(3,file='Rh1D.in/'//trim(iof)//'/'//cha3,status="old")
-    OPEN(2,file='Rh1D.in/'//trim(iof)//'/'//cha2,status="unknown")
+    OPEN(1,file=datapath(1:lenpath)//'/'//cha1,status="old",err=901)
+    OPEN(3,file=datapath(1:lenpath)//'/'//cha3,status="old",err=902)
+    OPEN(2,file=datapath(1:lenpath)//'/'//cha2,status="unknown",err=902)
     WRITE(2,*)"year month day ordinal et0 ep tp	pe"
-    read(3,*) !/lai and kc/
+    read(3,*,err=902) !/lai and kc/
     
-    IF (ifet) THEN
-        read(1,*)
-        read(1,*)fai,hhh,hu
-        read(1,*)
+    IF (AtmBC) THEN
+        read(1,*,err=901)
+        read(1,*,err=901)fai,hhh,hu
+        read(1,*,err=901)
     ELSE
-        read(1,*)
+        read(1,*,err=901)
     ENDIF
 		
     DO i=1,interval
-        IF (ifet) THEN
-            READ(1,*,iostat=ierr)year,month,day,tmean,tmax,tmin,nact,rhmean,uh,ato_p,PE
+        IF (AtmBC) THEN
+            READ(1,*,err=901)year,month,day,tmean,tmax,tmin,nact,rhmean,uh,ato_p,PE
             CALL Refet(year,month,day,Tmean,tmax,tmin,nact,RHmean,uh,hu,ato_p,hhh,fai,ET0,tmean1)
-        ELSEIF (.not.ifet) THEN
-            READ(1,*)year,month,day,et0,PE
+        ELSEIF (.not.AtmBC) THEN
+            READ(1,*,err=901)year,month,day,et0,PE
         ENDIF
 
-        READ(3,*)aa,aa,ckc,aa,aa,CLAif
+        READ(3,*,err=902)aa,aa,ckc,aa,aa,CLAif
         ETc=ckc*ET0 
         
 !        CLAIF = 0.25    !2017-06-02
         
         Ep=cLAIf*ETc    !CLAI exp[-f*LAI]
         Tp=ETc-Ep 
-        WRITE(2,"(i4,i2.2,i2.2,i6,4f8.3)")year,month,day,i,et0,ep,tp,PE
+        WRITE(2,"(i4,i2.2,i2.2,i6,4f8.3)",err=902)year,month,day,i,et0,ep,tp,PE
     ENDDO
     CLOSE(1)
     CLOSE(2)
     CLOSE(3)
     RETURN
+    
+901 Terr=1
+    RETURN
+902 Terr=3
+    RETURN
+
     END SUBROUTINE ep_tp
 
 ! ====================================================================
@@ -190,30 +204,30 @@
 ! =========================related functions==========================
 !   None.
 ! ====================================================================	
-    SUBROUTINE Crop(num,numc,dateini,interval,iof)
-    USE parm, ONLY : KR, KI
+    SUBROUTINE Crop(datapath,num,numc,dateini,interval)
+    USE parm, ONLY : KR, KI, Terr
     IMPLICIT NONE
 
-    CHARACTER (len=8) :: Dateini     ! Beginning time
-    CHARACTER (len=8) :: Date
-    CHARACTER (len=8) :: Date1
+    CHARACTER (len=8) :: Dateini, Date, Date1     ! Beginning time
     CHARACTER (len=8), DIMENSION(5) :: da
     CHARACTER (len=6) :: nameF
     CHARACTER (len=10) :: cha1
-    CHARACTER (len=9) :: iof
+    CHARACTER (LEN=100) :: datapath
     INTEGER (kind=KI) interval	! the simulation period
-    INTEGER (kind=KI), DIMENSION(5) :: jd
-    INTEGER (kind=KI) :: numc, num, nyear, nyear1, ndyear, JDATE, jd1, jmax, nyrr
-    INTEGER (kind=KI) :: i, j, k
-    REAL (kind=KR), DIMENSION(21) :: crpdat
-    REAL (kind=KR) :: f, ckc1, ckc2, ckc3, rd1, rd2, clai1, clai2, clai3, clai4
-    REAL (kind=KR) :: ckc, rd, clai, claif
-   
+    INTEGER (KIND=4), DIMENSION(5) :: jd
+    INTEGER (KIND=4) :: numc, nyear, nyear1, ndyear, JDATE, jd1, jmax, nyrr
+    REAL (KIND=KR), DIMENSION(21) :: crpdat
+    REAL (KIND=KR) :: f, ckc1, ckc2, ckc3, rd1, rd2, clai1, clai2, clai3, clai4
+    REAL (KIND=KR) :: ckc, rd, clai, claif
+    INTEGER (KIND=4) :: lenpath, num, i, j, k
+    
+    lenpath = Len_Trim(datapath)   
     namef="??.crp"
     WRITE(namef(1:2),"(i2.2)")num
-    OPEN(11,file='Rh1D.in/'//trim(iof)//'/'//nameF,status="unknown")
+    OPEN(11,file=datapath(1:lenpath)//'/'//nameF,status="unknown",err=901)
     WRITE(11,*)"date    ordinal Kc  rootdepth   LAI LAIF    rp(1:Nlayer)"
-    CALL cdatebase(numc,da,crpdat,iof)
+    CALL cdatebase(datapath,numc,da,crpdat)
+    IF (Terr.ne.0) RETURN
 
     f=crpdat(1)
     ckc1=crpdat(2)
@@ -235,11 +249,11 @@
     ENDDO
 
     DO i=1,5
-        jd(i)=jdate(da(i))
+        jd(i)=Jdate(da(i))
     ENDDO
     
     date=dateini
-    jd1=jdate(date)
+    jd1=Jdate(date)
 
     DO i=1,interval
         IF (jd1<jd(1).or.jd1>jd(5))THEN
@@ -277,6 +291,11 @@
         ENDIF
     ENDDO
     CLOSE(11)
+    RETURN
+
+901 Terr=3
+    RETURN
+    
     END SUBROUTINE Crop
 
 ! ====================================================================
@@ -303,11 +322,12 @@
     USE parm
     IMPLICIT NONE
 
-    REAL (kind=KR), DIMENSION(NlayerD) :: dz1
-    REAL (kind=KR), DIMENSION(NlayerD) :: dense
-    REAL (kind=KR), DIMENSION(10) :: work
-    REAL (kind=KR) :: r2, re, r1
-    INTEGER (kind=KI) :: i, j, L, N1, mlayer
+    REAL (KIND=KR), DIMENSION(NlayerD) :: dz1
+    REAL (KIND=KR), DIMENSION(NlayerD) :: dense
+    REAL (KIND=KR), DIMENSION(10) :: work
+    REAL (KIND=KR) :: r2, re, r1
+    INTEGER (KIND=KI) :: mlayer
+    INTEGER (KIND=4) ::  i, j, L, N1
     
     DO i=1,mlayer
         dense(i)=0.0
@@ -354,24 +374,29 @@
 ! =========================related functions==========================
 !   None.
 ! ====================================================================
-    SUBROUTINE cdatebase(Numc,da,crpdat,iof)
-    USE parm, ONLY : KR, KI
+    SUBROUTINE cdatebase(datapath,Numc,da,crpdat)
+    USE parm, ONLY : KR, KI, Terr
     IMPLICIT NONE
 
-    INTEGER (kind=KI) :: numc, i
     REAL (kind=KR), DIMENSION(21) :: crpdat
     CHARACTER (len=8), DIMENSION(5) :: da
     CHARACTER (len=10) :: nameC	
-    CHARACTER (len=9) :: iof
+    CHARACTER (LEN=100) :: datapath
+    INTEGER (KIND=4) :: lenpath, i, numc
 
-    OPEN(1,file='Rh1d.in/'//trim(iof)//'/cropdat.dat',status="old")
+    lenpath = Len_Trim(datapath)
+    OPEN(1,file=datapath(1:lenpath)//'/cropdat.dat',status="old",err=901)
     
     DO i=1,numc-1
-        READ(1,*)
+        READ(1,*,err=901)
     ENDDO
-    READ(1,*)nameC,da(1:5),crpdat(1:21)
+    READ(1,*,err=901)nameC,da(1:5),crpdat(1:21)
 
     CLOSE(1)
+    RETURN
+    
+901 Terr=2
+    RETURN
     END SUBROUTINE cdatebase
 
 ! ====================================================================
@@ -406,8 +431,8 @@
     USE parm, ONLY : KR, KI
     IMPLICIT NONE
 
-    INTEGER (KIND=KI), DIMENSION(12) :: Dm ! Calculation ordinal number
-    INTEGER (KIND=KI) :: i,year,month,day,julie
+    INTEGER (KIND=4), DIMENSION(12) :: Dm ! Calculation ordinal number
+    INTEGER (KIND=4) :: i,year,month,day,julie
     REAL (KIND=KR) :: tmean,tmax,tmin,nact,rhmean,uh,ea,deta,dr,si,tansi, &
          tmean1,ws,ra,np,rns,eamax,eamin,ed,rnl,rn,g,lamta,u2,gama,ato_p,et0
     REAL (KIND=KR) :: fai, hhh, hu, amta

@@ -57,7 +57,7 @@
 !     
 !     Purpose: calculate the redistribution of the water
 ! ====================================================================      
-    SUBROUTINE redistribution 
+    SUBROUTINE Water_Redis 
     USE parm
     IMPLICIT NONE
     
@@ -163,7 +163,7 @@
     
     TotalPerco=TotalPerco+perco
 !
-    excess=0. !
+    excess=0.0_KR !
 
     DO j=Nlayer,1,-1
         m=MATuz(j)
@@ -173,7 +173,7 @@
             excess=(th(j)-par(2,m))*dz(j)
             th(j)=par(2,m)
         ELSE !
-            excess=0.
+            excess=0.0_KR
         ENDIF
     
     ENDDO
@@ -182,10 +182,14 @@
         sum1 = sum1+th(i)*dz(i)
     ENDDO
     delta = sum0-sum1-TotalPerco
+    IF (delta > Tol) THEN
+        Terr = 1
+        RETURN
+    ENDIF
 
     !WRITE(99,"(130F10.7)")th
 
-    END SUBROUTINE redistribution
+    END SUBROUTINE Water_Redis
     
 ! ====================================================================
 !   Subroutine Water_SetET
@@ -198,7 +202,7 @@
 !   epa(:)      the actual soil evaporation [mm/d]
 !   sink1d(:)   the total source/sink term [m/d]
 ! ====================================================================
-    SUBROUTINE SetET
+    SUBROUTINE Water_SetET
     USE parm
     IMPLICIT NONE
     
@@ -264,17 +268,21 @@
         sum1 = sum1+th(i)*dz(i)
     ENDDO
     delta = sum0-sum1-sum(Sink1d)
+    IF (delta > Tol) THEN
+        Terr = 1
+        RETURN
+    ENDIF
    
     !WRITE(99,"(130F10.7)")th
 
-    END SUBROUTINE SetET
+    END SUBROUTINE Water_SetET
       
 ! ====================================================================
 !     Subroutine Water_Diff
 !     
 !     Purpose: calculate the diffusion process
 ! ====================================================================  
-    SUBROUTINE unsatflow
+    SUBROUTINE Water_Diff
     USE parm
     IMPLICIT NONE
     
@@ -356,6 +364,10 @@
             sum1 = sum1+th1(i)*dz(i)
         ENDDO
         delta = sum0 - sum1
+        IF (delta > Tol) THEN
+            Terr = 1
+            RETURN
+        ENDIF
 
         mq = 0.0_KR
         DO i = 1,Nlayer
@@ -429,7 +441,7 @@
     
     !WRITE(99,"(130F10.7)")th
     
-    END SUBROUTINE unsatflow
+    END SUBROUTINE Water_Diff
 
 ! ====================================================================
 !   Subroutine Chase

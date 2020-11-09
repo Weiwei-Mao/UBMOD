@@ -56,12 +56,12 @@
 ! =========================Outcoming variables========================
 !   JDate       The different beween for the date and 1960-1-1.
 ! ====================================================================
-    INTEGER Function JDate(date)
+    Function JDate(date)
     IMPLICIT NONE
     CHARACTER (LEN=8) :: date
     INTEGER (KIND=4) :: nY, nM, nD, numrun, nmd, nyd, i
-    INTEGER (KIND=4) :: ifrun
-      
+    INTEGER (KIND=4) :: ifrun, JDate
+
     READ(date(1:4),"(i4)")nY
     READ(date(5:6),"(i2)")nM
     READ(date(7:8),"(i2)")nD

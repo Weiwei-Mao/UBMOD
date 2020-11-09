@@ -28,9 +28,11 @@
     sink1d = 0.0_KR
 
     voluz=sum(th(1:Nlayer)*dz(1:Nlayer))  !!!The specific storage is ignored.
-    WRITE(89,*)"Variables=t,voluz,Dvoluz,qair,qbtm,CumE,CumT,Error,Error%"
-
+    WRITE(89,*,err=901)"Variables=t,voluz,Dvoluz,qair,qbtm,CumE,CumT,Error,Error%"
     RETURN
+    
+901 Terr=1
+    RETURN    
     END SUBROUTINE Balance_Initial
 
 ! ====================================================================
@@ -132,44 +134,55 @@
 ! =========================related functions==========================
 !   None.
 ! ==================================================================== 
-    SUBROUTINE Upper_Boundary
+    SUBROUTINE Upper_Boundary(datapath)
     USE parm
-    CHARACTER (len=8) :: DDate
-    INTEGER (kind=KI) :: Jd0
-    
+    CHARACTER (LEN=8) :: DDate
+    CHARACTER (LEN=100) :: datapath
+    INTEGER (KIND=4) :: lenpath
+    INTEGER (KIND=KI) :: Jd0
+
+    lenpath = Len_Trim(datapath)
     IF (bup == 1) THEN  
-        CALL Etp(1)
-        OPEN(110,file='Rh1D.in/'//trim(iof)//'/'//'01.et0',status='old')
-        READ(110,*)
-        OPEN(130,file='Rh1D.in/'//trim(iof)//'/'//'01.eti',status='old')
-        OPEN(150,file='Rh1D.out/'//trim(iof)//'/'//'eta.dat',status='unknown')
-        WRITE(150,*)"Variables=DoY,   Ea,   Ta,   Date"
-        READ(130,*)
+        CALL Etp(1,datapath)
+        IF (Terr.ne.0) RETURN
+        OPEN(110,file=datapath(1:lenpath)//'/'//'01.et0',status='old',err=901)
+        READ(110,*,err=901)
+        OPEN(130,file=datapath(1:lenpath)//'/'//'01.eti',status='old',err=901)
+        OPEN(150,file=datapath(1:lenpath)//'/'//'eta.dat',status='unknown',err=902)
+        WRITE(150,*,err=902)"Variables=DoY,   Ea,   Ta,   Date"
+        READ(130,*,err=901)
                 
         IF (.NOT. ALLOCATED(precip)) ALLOCATE(precip(2,MaxAL))
         IF (.NOT. ALLOCATED(Evatra)) ALLOCATE(Evatra(2*Nlayer,MaxAL))
         
         DO i = 1,MaxAL
-            READ(110,*) Nouse,precip(1,i),Nouse,Nouse,Nouse,precip(2,i)
-            READ(130,*) Nouse,Nouse,(Evatra(j,i),j=1,2*Nlayer)
+            READ(110,*,err=901) Nouse,precip(1,i),Nouse,Nouse,Nouse,precip(2,i)
+            READ(130,*,err=901) Nouse,Nouse,(Evatra(j,i),j=1,2*Nlayer)
         ENDDO
         precip(2,:) = precip(2,:)/1000_KI
         Evatra = Evatra/1000_KI
         
     ELSEIF (bup == 2) THEN
-        OPEN(120,file='Rh1D.in/'//trim(iof)//'/'//'met.in',status='old')
-        READ(120,*)
-        READ(120,*)Nup,Ndn
-        READ(120,*)
-        READ(120,*)(up(1,i),i=1,Nup)
-        READ(120,*)
-        READ(120,*)(up(2,i),i=1,Nup)
-        READ(120,*)
-        READ(120,*)(dn(1,i),i=1,Ndn)
-        READ(120,*)
-        READ(120,*)(dn(2,i),i=1,Ndn)
+        OPEN(120,file=datapath(1:lenpath)//'/'//'met.in',status='old',err=903)
+        READ(120,*,err=903)
+        READ(120,*,err=903)Nup,Ndn
+        READ(120,*,err=903)
+        READ(120,*,err=903)(up(1,i),i=1,Nup)
+        READ(120,*,err=903)
+        READ(120,*,err=903)(up(2,i),i=1,Nup)
+        READ(120,*,err=903)
+        READ(120,*,err=903)(dn(1,i),i=1,Ndn)
+        READ(120,*,err=903)
+        READ(120,*,err=903)(dn(2,i),i=1,Ndn)
     ENDIF
-   
+    RETURN
+    
+901 Terr=3
+    RETURN
+902 Terr=4
+    RETURN
+903 Terr=5
+    RETURN
     END SUBROUTINE Upper_Boundary
     
 ! ====================================================================
@@ -177,7 +190,7 @@
 !     
 !   Purpose: Set the boundary input values
 ! ====================================================================
-    SUBROUTINE SetQ
+    SUBROUTINE Set_Input
     USE parm
     INTEGER (kind=KI) :: k, kk
     
@@ -192,7 +205,7 @@
         CALL FindY_Step(Nup,t,qair,up,k)
     ENDIF
    
-    END SUBROUTINE SetQ
+    END SUBROUTINE Set_Input
 
 ! ====================================================================
 !   Subroutine FindY_Step 
